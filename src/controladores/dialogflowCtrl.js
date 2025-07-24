@@ -1,29 +1,33 @@
 import fetch from 'node-fetch';
 import { GoogleAuth } from 'google-auth-library';
 
+const decodeCredentials = () => {
+  const b64 = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON_B64;
+  if (!b64) throw new Error('Falta GOOGLE_APPLICATION_CREDENTIALS_JSON_B64');
+  const jsonStr = Buffer.from(b64, 'base64').toString('utf-8');
+  return JSON.parse(jsonStr);
+};
+
 export const enviarMensaje = async (req, res) => {
   try {
+    const credentials = decodeCredentials();
+
     const auth = new GoogleAuth({
+      credentials,
       scopes: 'https://www.googleapis.com/auth/cloud-platform'
     });
 
     const client = await auth.getClient();
     const token = await client.getAccessToken();
-    console.log('Token:', token);
 
-    const projectId = 'prueba-opau'; // reemplaza con tu projectId real
-    const sessionId = '123456789'; // o genera un id único
+    const projectId = credentials.project_id;
 
-    if (!req.body.message) {
-      return res.status(400).json({ error: 'El mensaje es obligatorio' });
-    }
-
-    const response = await fetch(
-      `https://dialogflow.googleapis.com/v2/projects/${projectId}/agent/sessions/${sessionId}:detectIntent`,
+    const respuesta = await fetch(
+      `https://dialogflow.googleapis.com/v2/projects/${projectId}/agent/sessions/123456789:detectIntent`,
       {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${token.token || token}`,
+          Authorization: `Bearer ${token.token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -37,15 +41,7 @@ export const enviarMensaje = async (req, res) => {
       }
     );
 
-    if (!response.ok) {
-      const errorBody = await response.text();
-      console.error('Error en respuesta Dialogflow:', errorBody);
-      return res.status(response.status).json({ error: errorBody });
-    }
-
-    const data = await response.json();
-    console.log('Respuesta Dialogflow:', data);
-
+    const data = await respuesta.json();
     res.json({
       fulfillmentText: data.queryResult?.fulfillmentText || 'No hay respuesta',
       raw: data
@@ -55,4 +51,5 @@ export const enviarMensaje = async (req, res) => {
     res.status(500).json({ error: 'Error al conectarse con Dialogflow' });
   }
 };
+
 
