@@ -1,5 +1,5 @@
 import express from 'express';
-import { enviarMensaje } from '../controllers/dialogflowCtrl.js';
+import { enviarMensaje } from '../controladores/dialogflowCtrl.js';
 
 const router = express.Router();
 
