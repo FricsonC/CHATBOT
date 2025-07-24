@@ -42,7 +42,7 @@ app.use('/api/disponibilidad', disponibilidadRoutes);
 app.use('/api/reservas', reservaRoutes);
 app.use('/api/comentarios', comentarioRoutes);
 app.use('/api/sanciones', sancionRoutes);
-app.use('/api/dialogflow', dialogflowRoutes);
+app.use('/api', dialogflowRoutes);
 
 // Ruta de prueba
 app.get('/', (req, res) => {
