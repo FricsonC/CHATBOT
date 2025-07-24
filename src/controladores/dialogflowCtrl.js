@@ -9,29 +9,43 @@ export const enviarMensaje = async (req, res) => {
 
     const client = await auth.getClient();
     const token = await client.getAccessToken();
+    console.log('Token:', token);
 
-    const projectId = 'prueba-opau'; // ← reemplaza por el ID real de tu agente
+    const projectId = 'prueba-opau'; // reemplaza con tu projectId real
+    const sessionId = '123456789'; // o genera un id único
 
-    const respuesta = await fetch(
-      `https://dialogflow.googleapis.com/v2/projects/${projectId}/agent/sessions/123456789:detectIntent`,
+    if (!req.body.message) {
+      return res.status(400).json({ error: 'El mensaje es obligatorio' });
+    }
+
+    const response = await fetch(
+      `https://dialogflow.googleapis.com/v2/projects/${projectId}/agent/sessions/${sessionId}:detectIntent`,
       {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${token.token}`,
+          Authorization: `Bearer ${token.token || token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           queryInput: {
             text: {
               text: req.body.message,
-              languageCode: 'es' // cambia a tu idioma si es necesario
+              languageCode: 'es'
             }
           }
         })
       }
     );
 
-    const data = await respuesta.json();
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.error('Error en respuesta Dialogflow:', errorBody);
+      return res.status(response.status).json({ error: errorBody });
+    }
+
+    const data = await response.json();
+    console.log('Respuesta Dialogflow:', data);
+
     res.json({
       fulfillmentText: data.queryResult?.fulfillmentText || 'No hay respuesta',
       raw: data
@@ -41,3 +55,4 @@ export const enviarMensaje = async (req, res) => {
     res.status(500).json({ error: 'Error al conectarse con Dialogflow' });
   }
 };
+
